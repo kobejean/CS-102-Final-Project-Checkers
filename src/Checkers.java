@@ -1,12 +1,11 @@
 import java.awt.Color;
 import java.lang.Math;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.util.*;
 import javax.swing.JOptionPane;
 
 public class Checkers {
     private int _width = 400, _height = 400;
-    private int _rowCount = 8, _columnCount = 8;
     private CellState[][] _states  = new CellState[8][8];
     private CellIndex _selectedIndex = new CellIndex(); // selected chip index
     private boolean _isMousePressed = false;
@@ -179,56 +178,79 @@ public class Checkers {
         }
     }
 
-    private ArrayList<CellIndex> possibleMoves(){
-        ArrayList<CellIndex> possibleMoves = new ArrayList<CellIndex>();
+    private Set<CellIndex> possibleMoves(){
+        Set<CellIndex> possibleMoves = new HashSet<CellIndex>();
         if (!_selectedIndex.isOutOfBounds()){
-            if (_currentPlayer == Player.BLACK){
-                CellIndex NE = _selectedIndex.NE();
-                CellIndex NW = _selectedIndex.NW();
-                CellIndex DSNE = NE.NE();
-                CellIndex DSNW = NW.NW();
-                if (!NW.isOutOfBounds()){
+            if (_currentPlayer.isBLACK()){
+                // indices to consider
+                CellIndex NE = _selectedIndex.NE(); // north east
+                CellIndex NW = _selectedIndex.NW(); // north west
+                CellIndex DSNE = NE.NE(); // double skip north east
+                CellIndex DSNW = NW.NW(); // double skip north west
+                if (NW.isOnBoard()){
+                    // north east is still on the board
                     CellState stateNW = getCellState(NW);
-                    if (stateNW == CellState.NONE){
+                    if (stateNW.isNONE()){
+                        // north west is empty we can go there
                         possibleMoves.add(NW);
-                    }else if (stateNW == CellState.RED){
+                    }else if (stateNW.belongsTo(_currentPlayer.enemy())){
+                        // north west is enemy so see if we can capture
                         if (!DSNW.isOutOfBounds())
-                            if (getCellState(DSNW) == CellState.NONE)
+                            // double skip is still on the board
+                            if (getCellState(DSNW).isNONE())
+                                // double skip is empty so we can make capture
                                 possibleMoves.add(DSNW);
                     }
                 }
-                if (!NE.isOutOfBounds()){
+                if (NE.isOnBoard()){
+                    // north east is still on the board
                     CellState stateNE = getCellState(NE);
-                    if (stateNE == CellState.NONE){
+                    if (stateNE.isNONE()){
+                        // north east is empty we can go there
                         possibleMoves.add(NE);
-                    }else if (stateNE == CellState.RED){
+                    }else if (stateNE.belongsTo(_currentPlayer.enemy())){
+                        // north east is enemy so see if we can capture
                         if (!DSNE.isOutOfBounds())
-                            if (getCellState(DSNE) == CellState.NONE)
+                            // double skip is still on the board
+                            if (getCellState(DSNE).isNONE())
+                                // double skip is empty so we can make capture
                                 possibleMoves.add(DSNE);
                     }
                 }
-            }else if(_currentPlayer == Player.RED){
-                CellIndex SE = _selectedIndex.SE();
-                CellIndex SW = _selectedIndex.SW();
-                CellIndex DSSE = SE.SE();
-                CellIndex DSSW = SW.SW();
-                if (!SW.isOutOfBounds()){
+            }else if(_currentPlayer.isRED()){
+                // indices to consider
+                CellIndex SE = _selectedIndex.SE(); // south east
+                CellIndex SW = _selectedIndex.SW(); // south west
+                CellIndex DSSE = SE.SE(); // double skip south east
+                CellIndex DSSW = SW.SW(); // double skip south west
+
+                if (SW.isOnBoard()){
+                    // south west is still on the board
                     CellState stateSW = getCellState(SW);
-                    if (stateSW == CellState.NONE){
+                    if (stateSW.isNONE()){
+                        // south west is empty we can go there
                         possibleMoves.add(SW);
-                    }else if (stateSW == CellState.BLACK){
+                    }else if (stateSW.belongsTo(_currentPlayer.enemy())){
+                        // south west is enemy so see if we can capture
                         if (!DSSW.isOutOfBounds())
-                            if (getCellState(DSSW) == CellState.NONE)
+                            // double skip is still on the board
+                            if (getCellState(DSSW).isNONE())
+                                // double skip is empty so we can make capture
                                 possibleMoves.add(DSSW);
                     }
                 }
-                if (!SE.isOutOfBounds()){
+                if (SE.isOnBoard()){
+                    // south east is still on the board
                     CellState stateSE = getCellState(SE);
-                    if (stateSE == CellState.NONE){
+                    if (stateSE.isNONE()){
+                        // south east is empty we can go there
                         possibleMoves.add(SE);
-                    }else if (stateSE == CellState.BLACK){
-                        if (!DSSE.isOutOfBounds())
-                            if (getCellState(DSSE) == CellState.NONE)
+                    }else if (stateSE.belongsTo(_currentPlayer.enemy())){
+                        // south east is enemy so see if we can capture
+                        if (DSSE.isOnBoard())
+                            // double skip is still on the board
+                            if (getCellState(DSSE).isNONE())
+                                // double skip is empty so we can make capture
                                 possibleMoves.add(DSSE);
                     }
                 }
@@ -274,11 +296,44 @@ public class Checkers {
     ***************************************************************************/
 
     public enum CellState {
-        NONE, RED, BLACK
+        NONE, RED, BLACK;
+        public boolean isNONE(){
+            return this == CellState.NONE;
+        }
+        public boolean isRED(){
+            return this == CellState.RED;
+        }
+        public boolean isBLACK(){
+            return this == CellState.BLACK;
+        }
+        public boolean belongsTo(Player player){
+            if (player.isBLACK()){
+                return this.isBLACK();
+            }else{
+                return this.isRED();
+            }
+        }
     }
 
+    /***************************************************************************
+    *                         - Player ENUMERATION -                           *
+    ***************************************************************************/
+
     public enum Player {
-        RED, BLACK
+        RED, BLACK;
+        public boolean isRED(){
+            return this == Player.RED;
+        }
+        public boolean isBLACK(){
+            return this == Player.BLACK;
+        }
+        public Player enemy(){
+            if (this.isBLACK()){
+                return Player.RED;
+            }else{
+                return Player.BLACK;
+            }
+        }
     }
 
     public class CellIndex {
@@ -293,8 +348,17 @@ public class Checkers {
             this.j = -1;
         }
 
+        public void set(int i, int j){
+            this.i = i;
+            this.j = j;
+        }
+
         public boolean isOutOfBounds(){
             return i < 0 || i >= 8 || j < 0 || j >= 8;
+        }
+
+        public boolean isOnBoard(){
+            return !isOutOfBounds();
         }
 
         public CellIndex NE(){
