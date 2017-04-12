@@ -1,8 +1,8 @@
 import java.awt.Color;
-import java.lang.Math;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.lang.Math;
 import javax.swing.JOptionPane;
+import java.util.*;
 
 public class Checkers {
     private int _width = 400, _height = 400;
@@ -13,6 +13,7 @@ public class Checkers {
     private Player _currentPlayer = Player.BLACK;
     private int _redScore = 0;
     private int _blackScore = 0;
+
     /***************************************************************************
 	 * CONSTRUCTORS                                                            *
 	 **************************************************************************/
@@ -35,9 +36,6 @@ public class Checkers {
                 }
             }
         }
-        // _states[5][3] = CellState.RED;
-        // _states[2][4] = CellState.BLACK;
-
 
         StdDraw.setCanvasSize(_width, _height);  //default is 400 x 400
 
@@ -102,8 +100,37 @@ public class Checkers {
         }
     }
 
+    public void run(){
+        // control when to show to save running time
+        StdDraw.enableDoubleBuffering();
+
+        int shortDelay = 20;
+        int normalDelay = 100;
+
+        while (true){
+            _isMousePressed = StdDraw.mousePressed();
+            if (!_wasMousePressed && _isMousePressed){
+                // new click just happened
+                int i = (int) Math.floor(StdDraw.mouseX());
+                int j = (int) Math.floor(StdDraw.mouseY());
+                CellIndex clickedIndex = new CellIndex(i,j);
+                cellClicked(clickedIndex);
+            }
+            _wasMousePressed = _isMousePressed;
+
+            StdDraw.clear();
+            draw();
+            StdDraw.show();
+            StdDraw.pause(shortDelay);
+        }
+    }
+
+    public void nextTurn(){
+        _currentPlayer = _currentPlayer.enemy();
+    }
+
     public void reduceEnemyScore(){
-        if (_currentPlayer == Player.RED){
+        if (_currentPlayer.isRED()){
             _blackScore--;
             if (_blackScore == 0){
                 String title = "RED WINS!";
@@ -114,7 +141,7 @@ public class Checkers {
                     // reset
                 }
             }
-        }else if(_currentPlayer == Player.BLACK){
+        }else if(_currentPlayer.isBLACK()){
             _redScore--;
             if (_redScore == 0){
                 String title = "BLACK WINS!";
@@ -125,56 +152,6 @@ public class Checkers {
                     // reset
                 }
             }
-        }
-    }
-
-    public void nextTurn(){
-        if (_currentPlayer == Player.RED){
-            _currentPlayer = Player.BLACK;
-        }else if(_currentPlayer == Player.BLACK){
-            _currentPlayer = Player.RED;
-        }
-    }
-
-    public void cellClicked(int i, int j){
-        CellState cellState = _states[i][j];
-        switch(cellState){
-            case NONE:
-                for (CellIndex c : possibleMoves()){
-                    if (c.i == i && c.j == j){
-                        // if clicked on a possible move
-                        if (Math.abs(_selectedIndex.j-c.j) == 2){
-                            // if making a capture
-                            int capI = (_selectedIndex.i+c.i)/2;
-                            int capJ = (_selectedIndex.j+c.j)/2;
-                            CellIndex capIndex = new CellIndex(capI,capJ);
-                            // capture
-                            setCellState(capIndex, CellState.NONE);
-                            reduceEnemyScore();
-                        }
-                        // move chip
-                        setCellState(c,getCellState(_selectedIndex));
-                        setCellState(_selectedIndex, CellState.NONE);
-                        // unselect
-                        _selectedIndex = new CellIndex();
-                        // next turn
-                        nextTurn();
-                        break;
-                    }
-                }
-                break;
-            case RED:
-                if (_currentPlayer == Player.RED){
-                    _selectedIndex.i = i;
-                    _selectedIndex.j = j;
-                }
-                break;
-            case BLACK:
-                if (_currentPlayer == Player.BLACK){
-                    _selectedIndex.i = i;
-                    _selectedIndex.j = j;
-                }
-                break;
         }
     }
 
@@ -259,6 +236,46 @@ public class Checkers {
         return possibleMoves;
     }
 
+    public void cellClicked(CellIndex clickedIndex){
+        CellState cellState = getCellState(clickedIndex);
+        switch(cellState){
+            case NONE:
+                for (CellIndex moveIndex : possibleMoves()){
+                    if (clickedIndex.equals(moveIndex)){
+                        // if clicked on a possible move
+                        if (Math.abs(_selectedIndex.j-clickedIndex.j) == 2){
+                            // if making a capture
+                            int capI = (_selectedIndex.i+clickedIndex.i)/2;
+                            int capJ = (_selectedIndex.j+clickedIndex.j)/2;
+                            CellIndex capIndex = new CellIndex(capI,capJ);
+                            // capture
+                            setCellState(capIndex, CellState.NONE);
+                            reduceEnemyScore();
+                        }
+                        // move chip
+                        setCellState(clickedIndex,getCellState(_selectedIndex));
+                        setCellState(_selectedIndex, CellState.NONE);
+                        // unselect
+                        _selectedIndex = new CellIndex();
+                        // next turn
+                        nextTurn();
+                        break;
+                    }
+                }
+                break;
+            case RED:
+                if (_currentPlayer == Player.RED){
+                    _selectedIndex = clickedIndex;
+                }
+                break;
+            case BLACK:
+                if (_currentPlayer == Player.BLACK){
+                    _selectedIndex = clickedIndex;
+                }
+                break;
+        }
+    }
+
     private CellState getCellState(CellIndex c){
         return _states[c.i][c.j];
     }
@@ -267,32 +284,8 @@ public class Checkers {
         _states[c.i][c.j] = state;
     }
 
-    public void run(){
-        // control when to show to save running time
-        StdDraw.enableDoubleBuffering();
-
-        int shortDelay = 20;
-        int normalDelay = 100;
-
-        while (true){
-            _isMousePressed = StdDraw.mousePressed();
-            if (!_wasMousePressed && _isMousePressed){
-                // new click just happened
-                int i = (int) Math.floor(StdDraw.mouseX());
-                int j = (int) Math.floor(StdDraw.mouseY());
-                cellClicked(i, j);
-            }
-            _wasMousePressed = _isMousePressed;
-
-            StdDraw.clear();
-            draw();
-            StdDraw.show();
-            StdDraw.pause(shortDelay);
-        }
-    }
-
     /***************************************************************************
-    *                       - CellState ENUMERATION -                          *
+    *                        - CellState Enumeration -                         *
     ***************************************************************************/
 
     public enum CellState {
@@ -316,11 +309,12 @@ public class Checkers {
     }
 
     /***************************************************************************
-    *                         - Player ENUMERATION -                           *
+    *                         - Player Enumeration -                           *
     ***************************************************************************/
 
     public enum Player {
         RED, BLACK;
+
         public boolean isRED(){
             return this == Player.RED;
         }
@@ -335,6 +329,10 @@ public class Checkers {
             }
         }
     }
+
+    /***************************************************************************
+    *                           - CellIndex Class -                            *
+    ***************************************************************************/
 
     public class CellIndex {
         int i = -1, j = -1;
@@ -375,6 +373,26 @@ public class Checkers {
 
         public CellIndex NW(){
             return new CellIndex(i - 1, j + 1);
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (object == this)
+                return true;   //If objects equal, is OK
+            if (object instanceof CellIndex){
+                CellIndex that = (CellIndex)object;
+                return (i == that.i) && (j == that.j);
+            }
+            return false;
+        }
+
+        // Idea from effective Java : Item 9
+        @Override
+        public int hashCode() {
+            int result = 17;
+            result = 31 * result + i;
+            result = 31 * result + j;
+            return result;
         }
     }
 }
