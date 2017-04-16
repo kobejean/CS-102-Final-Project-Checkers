@@ -20,6 +20,28 @@ public class Checkers {
 
     public Checkers(){
         // Set up cell states
+        reset();
+
+        StdDraw.setCanvasSize(_width, _height);  //default is 400 x 400
+
+        // Set the drawing scale to dimentions
+        StdDraw.setXscale(0, 8);
+        StdDraw.setYscale(0, 8);
+
+        // Set 1 px pen radius
+        StdDraw.setPenRadius(1.0 / _width);
+    }
+
+    /***************************************************************************
+	* METHODS                                                                  *
+	***************************************************************************/
+
+    public void reset(){
+        _currentPlayer = Player.BLACK;
+        _selectedIndex = new CellIndex();
+        _redScore = 0;
+        _blackScore = 0;
+        // Set up cell states
         for (int i = 0; i < 8; i++){
             for (int j = 0; j < 8; j++){
                 boolean isOnLightGrey = ((i+j)%2) == 0;
@@ -36,20 +58,7 @@ public class Checkers {
                 }
             }
         }
-
-        StdDraw.setCanvasSize(_width, _height);  //default is 400 x 400
-
-        // Set the drawing scale to dimentions
-        StdDraw.setXscale(0, 8);
-        StdDraw.setYscale(0, 8);
-
-        // Set 1 px pen radius
-        StdDraw.setPenRadius(1.0 / _width);
     }
-
-    /***************************************************************************
-	 * METHODS                                                                 *
-	 **************************************************************************/
 
     public void draw(){
         for (int i = 0; i < 8; i++){
@@ -122,6 +131,9 @@ public class Checkers {
             draw();
             StdDraw.show();
             StdDraw.pause(shortDelay);
+
+            // check winner
+            checkWinner();
         }
     }
 
@@ -129,29 +141,32 @@ public class Checkers {
         _currentPlayer = _currentPlayer.enemy();
     }
 
+    public void checkWinner(){
+        if (_blackScore == 0){
+            String title = "RED WINS!";
+            String confirmMsg = "Would you like to play again?";
+            int option = JOptionPane.YES_NO_OPTION;
+            int reply = JOptionPane.showConfirmDialog(null, confirmMsg, title, option);
+            if (reply == JOptionPane.YES_OPTION){
+                reset();
+            }
+        }
+        if (_redScore == 0){
+            String title = "BLACK WINS!";
+            String confirmMsg = "Would you like to play again?";
+            int option = JOptionPane.YES_NO_OPTION;
+            int reply = JOptionPane.showConfirmDialog(null, confirmMsg, title, option);
+            if (reply == JOptionPane.YES_OPTION){
+                reset();
+            }
+        }
+    }
+
     public void reduceEnemyScore(){
         if (_currentPlayer.isRED()){
             _blackScore--;
-            if (_blackScore == 0){
-                String title = "RED WINS!";
-                String confirmMsg = "Would you like to play again?";
-                int option = JOptionPane.YES_NO_OPTION;
-                int reply = JOptionPane.showConfirmDialog(null, confirmMsg, title, option);
-                if (reply == JOptionPane.YES_OPTION){
-                    // reset
-                }
-            }
         }else if(_currentPlayer.isBLACK()){
             _redScore--;
-            if (_redScore == 0){
-                String title = "BLACK WINS!";
-                String confirmMsg = "Would you like to play again?";
-                int option = JOptionPane.YES_NO_OPTION;
-                int reply = JOptionPane.showConfirmDialog(null, confirmMsg, title, option);
-                if (reply == JOptionPane.YES_OPTION){
-                    // reset
-                }
-            }
         }
     }
 
